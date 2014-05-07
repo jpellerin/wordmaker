@@ -42,6 +42,19 @@ var _ = Describe("lexer", func() {
 		Expect(result).To(Equal(expected))
 	})
 
+	It("Can handle non-ascii chars and blanks", func() {
+		input := "C:/å/ü/î//p/"
+		expected := []string{"å", "ü", "î", "", "p", ""}
+		result := []string{}
+		_, items := Lex("test4", input)
+		for i := range items {
+			if i.typ == itemChoice {
+				result = append(result, i.val)
+			}
+		}
+		Expect(result).To(Equal(expected))
+	})
+
 })
 
 func TestWordmaker(t *testing.T) {

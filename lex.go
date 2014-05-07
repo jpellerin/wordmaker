@@ -2,7 +2,6 @@ package wordmaker
 
 import (
 	"fmt"
-	// "strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -133,7 +132,6 @@ func lexPattern(l *lexer) stateFn {
 
 func lexInChoices(l *lexer) (next stateFn) {
 	return choiceLexer(lexChoice)(l)
-
 }
 
 func choiceLexer(choiceFn stateFn) stateFn {
@@ -143,11 +141,11 @@ func choiceLexer(choiceFn stateFn) stateFn {
 			return nil
 		case r == '/':
 			l.emit(itemSlash)
-			return choiceLexer(choiceFn)
+			return choiceFn
 		case r == '(':
 			l.emit(itemLeftParen)
 			l.parenDepth++
-			return choiceLexer(choiceFn)
+			return choiceFn
 		case r == ')':
 			l.emit(itemRightParen)
 			l.parenDepth--
@@ -155,6 +153,7 @@ func choiceLexer(choiceFn stateFn) stateFn {
 				l.emit(itemError)
 				return nil
 			}
+			// blanks are not allowed after closing parens
 			return choiceLexer(choiceFn)
 		default:
 			l.backup()
