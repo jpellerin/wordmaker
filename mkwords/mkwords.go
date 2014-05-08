@@ -9,19 +9,58 @@ import (
 	"os"
 )
 
+func init() {
+	cli.AppHelpTemplate = `NAME:
+   {{.Name}} - {{.Usage}}
+
+USAGE:
+   {{.Name}} [rulefile] [options] command
+
+   The default rulefile is "rules.aw"
+
+VERSION:
+   {{.Version}}
+
+OPTIONS:
+   {{range .Flags}}{{.}}
+   {{end}}
+
+RULE FILE FORMAT:
+   * Lines starting with an uppercase character define word parts
+   * Lines starting with r define word patterns
+   * Slashes (/) separate options, which are in order of descending weight
+   * Parentheses may be used to group a set of options
+
+   Example:
+
+   V:a/i/u/ei/ao/ia/ai
+   C:p/t/k/s/m/n/b/w/x/y/ts/l/sh/ch
+   T:p/t/k
+   F:s
+   N:m/n/rn/rl/nd/ng
+   r:CV(N/-CV/-CVN/)
+`
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "mkwords"
 	app.Usage = "Make some fake words using awkwords-like rules"
+	app.Version = "0.1.1"
 
 	app.Flags = []cli.Flag{
 		cli.IntFlag{"words", 100, "number of words to generate"},
 		cli.Float64Flag{"dropoff", 0.7, "rate of dropoff in choice lists"},
+		cli.BoolFlag{"one-per-line", "output one word per line"},
 	}
 	app.Action = func(c *cli.Context) {
 		rulefile := "rules.aw"
 		words := c.Int("words")
 		dropoff := c.Float64("dropoff")
+		sep := " "
+		if c.Bool("one-per-line") {
+			sep = "\n"
+		}
 		if len(c.Args()) > 0 {
 			rulefile = c.Args()[0]
 		}
@@ -38,7 +77,8 @@ func main() {
 			if err != nil {
 				log.Fatalf("Word generation failure: %v", err)
 			}
-			fmt.Printf("%v ", w)
+			fmt.Printf("%v", w)
+			fmt.Print(sep)
 		}
 		fmt.Print("\n")
 	}
