@@ -21,6 +21,6 @@ N:m/n/rn/rl/nd/ng
 r:CV(N/-CV/-CVN/)
 ```
 
-Lines started with capital letters define word-part choices. Lines starting with 'r' define word construction patterns. That's about it.
+Lines starting with capital letters define word-part choices. Lines starting with 'r' define word construction patterns. That's about it.
 
 Try `mkwords -h` to get some possibly helpful usage information.
