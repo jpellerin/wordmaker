@@ -1,7 +1,7 @@
 package wordmaker
 
 import (
-	"fmt"
+	// "fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -33,8 +33,16 @@ var _ = Describe("the parser", func() {
 		input := "C:x/y/z"
 		_, items := Lex("p1", input)
 		header := <-items
+		MakeChoices(header.val, items, 0.7)
+	})
+
+	It("can handles multichar choices from the lexer", func() {
+		input := "C:x/yyy/z"
+		_, items := Lex("p1", input)
+		header := <-items
 		cls := MakeChoices(header.val, items, 0.7)
-		fmt.Sprintf("cls %q", cls)
+		// fmt.Printf("cls %v", cls)
+		Expect(len(cls.choices)).To(Equal(3))
 	})
 
 	It("can make a pattern from lexer input", func() {
@@ -47,6 +55,17 @@ var _ = Describe("the parser", func() {
 		Expect(cls.steps[2].Item.(chooser).Choose()).To(Equal("T"))
 	})
 
+	It("makes the correct pattern for multichar choices", func() {
+		input := "r:C(X/XX/)T"
+		_, items := Lex("p2", input)
+		<-items
+		cls := MakePattern(items, 0.7)
+		//fmt.Printf("cls %v", cls)
+		item := cls.steps[1].Item
+		//fmt.Printf("item %q", item)
+		Expect(len(item.(*ChoiceList).Items())).To(Equal(3))
+	})
+
 	It("can produce a full config from input", func() {
 		input := []string{"C:a/e/i",
 			"X:t/k/p",
@@ -56,5 +75,20 @@ var _ = Describe("the parser", func() {
 		Expect(err).To(BeNil())
 		Expect(cfg.Name).To(Equal("test"))
 		Expect(cfg.Class("C").Items()).To(Equal([]string{"a", "e", "i"}))
+	})
+
+	Describe("a pattern", func() {
+		input := "r:C(N/-X/-XN/)T"
+		_, items := Lex("p2", input)
+		<-items
+		pat := MakePattern(items, 0.7)
+
+		It("returns a channel of strings from Run", func() {
+			steps := pat.Run()
+			for c := range steps {
+				Expect(len(c)).To(Equal(1))
+			}
+		})
+
 	})
 })

@@ -32,8 +32,8 @@ var _ = Describe("lexer", func() {
 
 	It("Can lex a pattern", func() {
 		input := "r:CVN(X-Y(Z))"
-		expected := []string{"r", ":", "C", "V", "N", "(",
-			"X", "-", "Y", "(", "Z", ")", ")"}
+		expected := []string{"r", ":", "CVN", "(",
+			"X-Y", "(", "Z", ")", ")"}
 		result := []string{}
 		_, items := Lex("test3", input)
 		for i := range items {
@@ -43,9 +43,9 @@ var _ = Describe("lexer", func() {
 	})
 
 	It("Can lex a pattern with a choice followed by a step", func() {
-		input := "r:C(X/XX/)T"
+		input := "r:C(X/Y/)T"
 		expected := []string{"r", ":", "C", "(",
-			"X", "/", "X", "X", "/", "", ")", "T"}
+			"X", "/", "Y", "/", "", ")", "T"}
 		result := []string{}
 		_, items := Lex("test3", input)
 		for i := range items {
@@ -63,6 +63,18 @@ var _ = Describe("lexer", func() {
 			if i.typ == itemChoice {
 				result = append(result, i.val)
 			}
+		}
+		Expect(result).To(Equal(expected))
+	})
+
+	It("Can lex a pattern with a multi-char choice", func() {
+		input := "r:C(X/YY/)T"
+		expected := []string{"r", ":", "C", "(",
+			"X", "/", "YY", "/", "", ")", "T"}
+		result := []string{}
+		_, items := Lex("test3", input)
+		for i := range items {
+			result = append(result, i.val)
 		}
 		Expect(result).To(Equal(expected))
 	})

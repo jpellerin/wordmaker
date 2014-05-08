@@ -65,7 +65,7 @@ func (l *lexer) run() {
 	for state := lexLine; state != nil; {
 		state = state(l)
 	}
-	close(l.items)
+	defer close(l.items)
 }
 
 func (l *lexer) emit(t itemType) {
@@ -178,32 +178,20 @@ Loop:
 	return lexInChoices
 }
 
-func lexSlash(l *lexer) stateFn {
-	l.pos += 1
-	l.emit(itemSlash)
-	return lexInChoices
-}
-
-func lexLeftParen(l *lexer) stateFn {
-	l.pos += 1
-	l.emit(itemLeftParen)
-	return lexInChoices
-}
-
-func lexRightParen(l *lexer) stateFn {
-	l.pos += 1
-	l.emit(itemRightParen)
-	return lexInChoices
-}
-
 func lexInPattern(l *lexer) stateFn {
 	return choiceLexer(lexPatternItem)(l)
 }
 
 func lexPatternItem(l *lexer) stateFn {
-	r := l.next()
-	if isDelim(r) {
-		l.backup()
+Loop:
+	for {
+		switch r := l.next(); {
+		case isDelim(r):
+			l.backup()
+			break Loop
+		case r == eof:
+			break Loop
+		}
 	}
 	l.emit(itemChoice)
 	return lexInPattern

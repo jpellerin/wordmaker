@@ -41,11 +41,7 @@ func (c *Config) Word() (string, error) {
 		return "", err
 	}
 
-	for _, step := range pat.steps {
-		val, err := step.Item.(chooser).Choose()
-		if err != nil {
-			return "", err
-		}
+	for val := range pat.Run() {
 		cls := c.Class(val)
 		if cls == nil {
 			word = append(word, val)

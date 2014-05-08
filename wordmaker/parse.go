@@ -28,6 +28,7 @@ func Parse(name string, input []string, dropoff float64) (*Config, error) {
 
 type chooser interface {
 	Choose() (string, error)
+	Items() []string
 }
 
 type Choice struct {
@@ -41,6 +42,24 @@ type ChoiceList struct {
 
 type Pattern struct {
 	steps []R.Choice
+}
+
+func (p *Pattern) Run() chan string {
+	ch := make(chan string)
+	go func() {
+		for _, step := range p.steps {
+			choice, err := step.Item.(chooser).Choose()
+			if err != nil {
+				panic(err)
+			}
+			for _, c := range choice {
+				ch <- string(c)
+			}
+		}
+		defer close(ch)
+	}()
+
+	return ch
 }
 
 func (c *ChoiceList) Choose() (string, error) {
@@ -62,6 +81,10 @@ func (c *ChoiceList) Items() []string {
 
 func (c Choice) Choose() (string, error) {
 	return c.value, nil
+}
+
+func (c Choice) Items() []string {
+	return []string{c.value}
 }
 
 func Choices(name string, values []interface{}, dropoff float64) *ChoiceList {
