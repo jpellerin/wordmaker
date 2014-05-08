@@ -42,6 +42,18 @@ var _ = Describe("lexer", func() {
 		Expect(result).To(Equal(expected))
 	})
 
+	It("Can lex a pattern with a choice followed by a step", func() {
+		input := "r:C(X/XX/)T"
+		expected := []string{"r", ":", "C", "(",
+			"X", "/", "X", "X", "/", "", ")", "T"}
+		result := []string{}
+		_, items := Lex("test3", input)
+		for i := range items {
+			result = append(result, i.val)
+		}
+		Expect(result).To(Equal(expected))
+	})
+
 	It("Can handle non-ascii chars and blanks", func() {
 		input := "C:/å/ü/î//p/"
 		expected := []string{"å", "ü", "î", "", "p", ""}
