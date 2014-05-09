@@ -5,7 +5,7 @@ A toy for conlangers or ... other weirdos. Use it to generate words from config 
 To install, you'll need a working go build system. Then just:
 
 ```
-go install github.com/jpellerin/wordmaker/mkwords
+go get github.com/jpellerin/wordmaker/mkwords
 ```
 
 ... and you should have a mkwords binary that you can run to ... make ... words.
