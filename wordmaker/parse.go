@@ -107,14 +107,19 @@ func Choices(name string, values []interface{}, dropoff float64) *ChoiceList {
 
 func MakeChoices(name string, items chan item, dropoff float64) *ChoiceList {
 	choices := []interface{}{}
+	// fmt.Print("\nMakeChoices\n")
 Loop:
 	for i := range items {
+		// fmt.Printf(" mc %v\n", i)
 		switch i.typ {
 		case itemChoice:
+			// fmt.Printf("   mc a choice\n")
 			choices = append(choices, i.val)
 		case itemLeftParen:
+			// fmt.Printf("    mc ->\n")
 			choices = append(choices, MakeChoices("", items, dropoff))
 		case itemRightParen:
+			// fmt.Printf("    mc <-\n")
 			break Loop
 		}
 	}
@@ -124,7 +129,9 @@ Loop:
 
 func MakePattern(items chan item, dropoff float64) *Pattern {
 	pat := &Pattern{steps: []R.Choice{}}
+	// fmt.Print("\nMakePattern\n")
 	for i := range items {
+		// fmt.Printf("pat item %q\n", i)
 		switch i.typ {
 		case itemChoice:
 			pat.steps = append(pat.steps, R.Choice{Item: Choice{value: i.val}})

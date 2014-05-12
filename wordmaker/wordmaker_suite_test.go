@@ -42,6 +42,30 @@ var _ = Describe("lexer", func() {
 		Expect(result).To(Equal(expected))
 	})
 
+	It("Can lex a blank-first subpattern", func() {
+		input := "r:CVN(/X-Y)"
+		expected := []string{"r", ":", "CVN", "(",
+			"", "/", "X-Y", ")"}
+		result := []string{}
+		_, items := Lex("test3", input)
+		for i := range items {
+			result = append(result, i.val)
+		}
+		Expect(result).To(Equal(expected))
+	})
+
+	It("Can lex a pattern with nested choices XXX", func() {
+		input := "r:CVN((Z/)X-Y(Z))"
+		expected := []string{"r", ":", "CVN", "(",
+			"(", "Z", "/", "", ")", "X-Y", "(", "Z", ")", ")"}
+		result := []string{}
+		_, items := Lex("test3", input)
+		for i := range items {
+			result = append(result, i.val)
+		}
+		Expect(result).To(Equal(expected))
+	})
+
 	It("Can lex a pattern with a choice followed by a step", func() {
 		input := "r:C(X/Y/)T"
 		expected := []string{"r", ":", "C", "(",

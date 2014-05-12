@@ -69,6 +69,7 @@ func (l *lexer) run() {
 }
 
 func (l *lexer) emit(t itemType) {
+	// fmt.Printf("Emit %q %q@%v\n", t, l.input[l.start:l.pos], l.start)
 	l.items <- item{t, l.input[l.start:l.pos]}
 	l.start = l.pos
 }
@@ -169,7 +170,13 @@ Loop:
 		switch r := l.next(); {
 		case isAlpha(r):
 			// absorb
+			// fmt.Print(" absorb\n")
+		case r == '(':
+			// fmt.Print(" -->\n")
+			l.backup()
+			break Loop
 		default:
+			// fmt.Print("Emit due to %v\n", r)
 			l.backup()
 			l.emit(itemChoice)
 			break Loop
@@ -183,17 +190,24 @@ func lexInPattern(l *lexer) stateFn {
 }
 
 func lexPatternItem(l *lexer) stateFn {
+	emit := true
 Loop:
 	for {
 		switch r := l.next(); {
 		case isDelim(r):
+			if r == '(' {
+				// don't emit a blank item between ((
+				emit = false
+			}
 			l.backup()
 			break Loop
 		case r == eof:
 			break Loop
 		}
 	}
-	l.emit(itemChoice)
+	if emit || l.start < l.pos {
+		l.emit(itemChoice)
+	}
 	return lexInPattern
 }
 
