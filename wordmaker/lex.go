@@ -171,10 +171,6 @@ Loop:
 		case isAlpha(r):
 			// absorb
 			// fmt.Print(" absorb\n")
-		case r == '(':
-			// fmt.Print(" -->\n")
-			l.backup()
-			break Loop
 		default:
 			// fmt.Print("Emit due to %v\n", r)
 			l.backup()

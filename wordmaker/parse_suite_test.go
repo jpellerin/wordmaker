@@ -50,9 +50,9 @@ var _ = Describe("the parser", func() {
 		_, items := Lex("p2", input)
 		<-items
 		cls := MakePattern(items, 0.7)
-		Expect(cls.steps[0].Item.(chooser).Choose()).To(Equal("C"))
-		Expect(cls.steps[1].Item.(chooser).Choose()).To(MatchRegexp("X|"))
-		Expect(cls.steps[2].Item.(chooser).Choose()).To(Equal("T"))
+		Expect(cls.steps[0].Choose()).To(Equal("C"))
+		Expect(cls.steps[1].Choose()).To(MatchRegexp("X|"))
+		Expect(cls.steps[2].Choose()).To(Equal("T"))
 	})
 
 	It("makes the correct pattern for multichar choices", func() {
@@ -61,9 +61,9 @@ var _ = Describe("the parser", func() {
 		<-items
 		cls := MakePattern(items, 0.7)
 		//fmt.Printf("cls %v", cls)
-		item := cls.steps[1].Item
+		item := cls.steps[1]
 		//fmt.Printf("item %q", item)
-		Expect(len(item.(*ChoiceList).Items())).To(Equal(3))
+		Expect(len(item.Items())).To(Equal(3))
 	})
 
 	It("can produce a full config from input", func() {

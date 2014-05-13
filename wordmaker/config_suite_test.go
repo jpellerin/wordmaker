@@ -1,9 +1,9 @@
 package wordmaker
 
 import (
-	// "fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"regexp"
 )
 
 var _ = Describe("the configured system", func() {
@@ -61,6 +61,30 @@ var _ = Describe("the configured system", func() {
 		word, err := cfg.Word()
 		Expect(err).To(BeNil())
 		Expect(word).To(MatchRegexp("[aeu]([nmg]){0,2}[tpk]"))
+	})
+
+	It("can make a word from patterns with nested choices", func() {
+		input := []string{
+			"A:a/e/u",
+			"N:n/m/g",
+			"T:t/p/k",
+			"r:A((A/T)N/NN/)T",
+		}
+		cfg, err := Parse("test", input, 1)
+		hit := false
+		Expect(err).To(BeNil())
+		Debugf("%q", cfg.patterns[0])
+		for i := 0; i < 20; i++ {
+			word, err := cfg.Word()
+			Debugf("%v ", word)
+			Expect(err).To(BeNil())
+			Expect(word).To(MatchRegexp("[aeu]([aeutpk]){0,1}([nmg]){0,2}[tpk]"))
+			match, err := regexp.MatchString("^[aeu][aeutpk][nmg][tpk]$", word)
+			if match {
+				hit = true
+			}
+		}
+		Expect(hit).To(BeTrue())
 	})
 
 	It("can make a word from patterns with choices and literals", func() {

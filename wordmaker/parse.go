@@ -1,6 +1,7 @@
 package wordmaker
 
 import (
+	"bytes"
 	"fmt"
 	R "github.com/jmcvetta/randutil"
 )
@@ -41,14 +42,16 @@ type ChoiceList struct {
 }
 
 type Pattern struct {
-	steps []R.Choice
+	steps []chooser
 }
 
 func (p *Pattern) Run() chan string {
 	ch := make(chan string)
 	go func() {
+		defer close(ch)
 		for _, step := range p.steps {
-			choice, err := step.Item.(chooser).Choose()
+			Debugf("step %q", step)
+			choice, err := step.Choose()
 			if err != nil {
 				panic(err)
 			}
@@ -56,14 +59,35 @@ func (p *Pattern) Run() chan string {
 				ch <- string(c)
 			}
 		}
-		defer close(ch)
 	}()
 
 	return ch
 }
 
+func (p *Pattern) Choose() (string, error) {
+	buf := bytes.Buffer{}
+	for _, choice := range p.Items() {
+		buf.WriteString(choice)
+	}
+	return buf.String(), nil
+}
+
+func (p *Pattern) Items() []string {
+	items := []string{}
+	for choice := range p.Run() {
+		items = append(items, choice)
+	}
+	return items
+}
+
+func (p *Pattern) Append(ch chooser) error {
+	p.steps = append(p.steps, ch)
+	return nil
+}
+
 func (c *ChoiceList) Choose() (string, error) {
 	var ch interface{}
+	Debugf("Choose among %v", c.choices)
 	ch, err := R.WeightedChoice(c.choices)
 	if err != nil {
 		return "", err
@@ -74,7 +98,8 @@ func (c *ChoiceList) Choose() (string, error) {
 func (c *ChoiceList) Items() []string {
 	out := []string{}
 	for _, item := range c.choices {
-		out = append(out, item.Item.(Choice).value)
+		val, _ := item.Item.(chooser).Choose()
+		out = append(out, val)
 	}
 	return out
 }
@@ -90,6 +115,7 @@ func (c Choice) Items() []string {
 func Choices(name string, values []interface{}, dropoff float64) *ChoiceList {
 	cl := &ChoiceList{Name: name}
 	weight := 1000
+	Debugf("CHOICES %q", values)
 	for _, v := range values {
 		switch v.(type) {
 		case string:
@@ -99,6 +125,12 @@ func Choices(name string, values []interface{}, dropoff float64) *ChoiceList {
 			nc := R.Choice{Weight: weight,
 				Item: Choices("", v.([]interface{}), dropoff)}
 			cl.choices = append(cl.choices, nc)
+		case chooser:
+			nc := R.Choice{Weight: weight, Item: v}
+			cl.choices = append(cl.choices, nc)
+		default:
+			panic(fmt.Sprintf("Unknown choice type %T (%q)", v, v))
+			// Debugf("WTF IS a %q (%T)", v, v)
 		}
 		weight = int(float64(weight) * dropoff)
 	}
@@ -106,37 +138,72 @@ func Choices(name string, values []interface{}, dropoff float64) *ChoiceList {
 }
 
 func MakeChoices(name string, items chan item, dropoff float64) *ChoiceList {
+	var pat *Pattern
 	choices := []interface{}{}
-	// fmt.Print("\nMakeChoices\n")
+	Debug("MakeChoices")
+
+	// FIXME
+	// within this loop, build up a sequence, append it to choices only when
+	// reaching rightparen or end or slash
 Loop:
 	for i := range items {
-		// fmt.Printf(" mc %v\n", i)
+		Debugf(" mc %v", i)
 		switch i.typ {
 		case itemChoice:
-			// fmt.Printf("   mc a choice\n")
-			choices = append(choices, i.val)
+			Debugf("   mc a choice")
+			if pat == nil {
+				pat = NewPattern()
+			}
+			pat.Append(&Choice{value: i.val})
+		case itemSlash:
+			// append choice
+			Debugf("  mc slash /")
+			if pat != nil {
+				choices = append(choices, pat)
+				pat = nil
+			}
 		case itemLeftParen:
-			// fmt.Printf("    mc ->\n")
-			choices = append(choices, MakeChoices("", items, dropoff))
+			// append choice
+			Debugf("    mc ->")
+			if pat != nil {
+				choices = append(choices, pat)
+				pat = nil
+			}
+			if pat == nil {
+				pat = NewPattern()
+			}
+			pat.Append(MakeChoices("", items, dropoff))
 		case itemRightParen:
-			// fmt.Printf("    mc <-\n")
+			Debugf("    mc <-")
 			break Loop
 		}
 	}
 
+	// append choice if not nil
+	if pat != nil {
+		choices = append(choices, pat)
+		pat = nil
+	}
 	return Choices(name, choices, dropoff)
 }
 
+func NewPattern() *Pattern {
+	return &Pattern{steps: []chooser{}}
+}
+
 func MakePattern(items chan item, dropoff float64) *Pattern {
-	pat := &Pattern{steps: []R.Choice{}}
-	// fmt.Print("\nMakePattern\n")
+	Debug("MakePattern")
+	pat := NewPattern()
+Loop:
 	for i := range items {
-		// fmt.Printf("pat item %q\n", i)
+		Debugf("pat item %q", i)
 		switch i.typ {
 		case itemChoice:
-			pat.steps = append(pat.steps, R.Choice{Item: Choice{value: i.val}})
+			pat.steps = append(pat.steps, Choice{value: i.val})
 		case itemLeftParen:
-			pat.steps = append(pat.steps, R.Choice{Item: MakeChoices("", items, dropoff)})
+			pat.steps = append(pat.steps, MakeChoices("", items, dropoff))
+		case itemRightParen:
+			break Loop
 		}
 	}
 	return pat
