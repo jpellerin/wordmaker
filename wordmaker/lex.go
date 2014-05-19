@@ -160,7 +160,6 @@ func choiceLexer(choiceFn stateFn) stateFn {
 			l.backup()
 			return choiceFn
 		}
-		return nil
 	}
 }
 
