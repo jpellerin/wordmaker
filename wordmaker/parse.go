@@ -21,7 +21,7 @@ func Parse(name string, input []string, dropoff float64) (*Config, error) {
 				return nil, err
 			}
 		default:
-			return nil, fmt.Errorf("Invalid config")
+			return nil, fmt.Errorf("Invalid config: %v", header)
 		}
 	}
 	return cfg, nil

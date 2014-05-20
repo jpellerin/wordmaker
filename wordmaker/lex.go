@@ -156,6 +156,9 @@ func choiceLexer(choiceFn stateFn) stateFn {
 			}
 			// blanks are not allowed after closing parens
 			return choiceLexer(choiceFn)
+		case r == ':':
+			l.emit(itemError)
+			return nil
 		default:
 			l.backup()
 			return choiceFn
