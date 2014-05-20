@@ -102,4 +102,18 @@ var _ = Describe("the configured system", func() {
 		Expect(word).To(MatchRegexp("[aeu](?:q|(-[nmg]{0,2}))?[tpk]"))
 	})
 
+	It("can make a word from classes that ref other classes", func() {
+		input := []string{
+			"A:a/e/u",
+			"N:n/m/g",
+			"Q:A/N",
+			"r:Q",
+		}
+		cfg, err := Parse("test", input, 1)
+		Expect(err).To(BeNil())
+		word, err := cfg.Word()
+		Expect(err).To(BeNil())
+		Expect(word).To(MatchRegexp("[aeu]|[nmg]"))
+	})
+
 })

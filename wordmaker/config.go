@@ -34,6 +34,19 @@ func (c *Config) Class(name string) *ChoiceList {
 	return c.classes[name]
 }
 
+func (c *Config) Resolve(val string) (string, error) {
+	cls := c.Class(val)
+	if cls == nil {
+		return val, nil
+	} else {
+		val, err := cls.Choose()
+		if err != nil {
+			return "", err
+		}
+		return c.Resolve(val)
+	}
+}
+
 func (c *Config) Word() (string, error) {
 	word := []string{}
 	pat, err := pick(c.patterns)
@@ -42,16 +55,11 @@ func (c *Config) Word() (string, error) {
 	}
 
 	for val := range pat.Run() {
-		cls := c.Class(val)
-		if cls == nil {
-			word = append(word, val)
-		} else {
-			val, err := cls.Choose()
-			if err != nil {
-				return "", err
-			}
-			word = append(word, val)
+		val, err := c.Resolve(val)
+		if err != nil {
+			return "", err
 		}
+		word = append(word, val)
 	}
 	return strings.Join(word, ""), nil
 }
