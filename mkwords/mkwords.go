@@ -46,7 +46,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "mkwords"
 	app.Usage = "Make some fake words using awkwords-like rules"
-	app.Version = "0.1.3"
+	app.Version = "0.2.0"
 
 	app.Flags = []cli.Flag{
 		cli.IntFlag{"words", 100, "number of words to generate"},

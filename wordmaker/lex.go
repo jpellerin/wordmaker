@@ -108,12 +108,21 @@ func lexLine(l *lexer) stateFn {
 }
 
 func lexClass(l *lexer) stateFn {
-	l.next()
-	if l.peek() == ':' {
-		l.emit(itemClass)
-		l.next()
-		l.emit(itemColon)
-		return lexInChoices
+	for {
+		switch r := l.next(); {
+		case r == ':':
+			l.backup()
+			l.emit(itemClass)
+			l.next()
+			l.emit(itemColon)
+			return lexInChoices
+		case isDelim(r):
+			l.emit(itemError)
+			return nil
+		case r == eof || isEOL(r):
+			l.emit(itemError)
+			return nil
+		}
 	}
 	l.emit(itemError)
 	return nil

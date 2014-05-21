@@ -21,13 +21,36 @@ var _ = Describe("lexer", func() {
 		input := "C:x/y/z"
 		expected := []string{"x", "y", "z"}
 		result := []string{}
+		var cls string
 		_, items := Lex("test2", input)
 		for i := range items {
-			if i.typ == itemChoice {
+			switch i.typ {
+			case itemChoice:
 				result = append(result, i.val)
+			case itemClass:
+				cls = i.val
 			}
 		}
 		Expect(result).To(Equal(expected))
+		Expect(cls).To(Equal("C"))
+	})
+
+	It("Can lex an extended class name and choices", func() {
+		input := "C1:x/y/z"
+		expected := []string{"x", "y", "z"}
+		result := []string{}
+		var cls string
+		_, items := Lex("test2", input)
+		for i := range items {
+			switch i.typ {
+			case itemChoice:
+				result = append(result, i.val)
+			case itemClass:
+				cls = i.val
+			}
+		}
+		Expect(result).To(Equal(expected))
+		Expect(cls).To(Equal("C1"))
 	})
 
 	It("Can lex a pattern", func() {
