@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-var DEBUG bool
+var DEBUG bool = false
 
 func Debug(val string) {
 	if DEBUG {

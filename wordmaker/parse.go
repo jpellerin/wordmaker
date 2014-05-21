@@ -50,7 +50,7 @@ func (p *Pattern) Run() chan string {
 	go func() {
 		defer close(ch)
 		for _, step := range p.steps {
-			Debugf("step %q", step)
+			Debugf("step %+v", step)
 			choice, err := step.Choose()
 			if err != nil {
 				panic(err)
@@ -85,6 +85,16 @@ func (p *Pattern) Append(ch chooser) error {
 	return nil
 }
 
+func (p *Pattern) String() string {
+	buf := bytes.Buffer{}
+	buf.WriteString("<< ")
+	for _, step := range p.steps {
+		buf.WriteString(fmt.Sprintf("%v + ", step))
+	}
+	buf.WriteString(">>")
+	return buf.String()
+}
+
 func (c *ChoiceList) Choose() (string, error) {
 	var ch interface{}
 	Debugf("Choose among %v", c.choices)
@@ -104,8 +114,22 @@ func (c *ChoiceList) Items() []string {
 	return out
 }
 
+func (c *ChoiceList) String() string {
+	buf := bytes.Buffer{}
+	buf.WriteString("(- ")
+	for _, item := range c.choices {
+		buf.WriteString(fmt.Sprintf("%v | ", item))
+	}
+	buf.WriteString("-)")
+	return buf.String()
+}
+
 func (c Choice) Choose() (string, error) {
 	return c.value, nil
+}
+
+func (c Choice) String() string {
+	return c.value
 }
 
 func (c Choice) Items() []string {
@@ -115,7 +139,7 @@ func (c Choice) Items() []string {
 func Choices(name string, values []interface{}, dropoff float64) *ChoiceList {
 	cl := &ChoiceList{Name: name}
 	weight := 1000
-	Debugf("CHOICES %q", values)
+	// Debugf("CHOICES %q", values)
 	for _, v := range values {
 		switch v.(type) {
 		case string:
@@ -134,6 +158,7 @@ func Choices(name string, values []interface{}, dropoff float64) *ChoiceList {
 		}
 		weight = int(float64(weight) * dropoff)
 	}
+	Debugf("---> Choices(%v)", cl)
 	return cl
 }
 
@@ -142,15 +167,12 @@ func MakeChoices(name string, items chan item, dropoff float64) *ChoiceList {
 	choices := []interface{}{}
 	Debug("MakeChoices")
 
-	// FIXME
-	// within this loop, build up a sequence, append it to choices only when
-	// reaching rightparen or end or slash
 Loop:
 	for i := range items {
 		Debugf(" mc %v", i)
 		switch i.typ {
 		case itemChoice:
-			Debugf("   mc a choice")
+			Debugf("   mc a choice :%v:", i.val)
 			if pat == nil {
 				pat = NewPattern()
 			}
@@ -163,12 +185,7 @@ Loop:
 				pat = nil
 			}
 		case itemLeftParen:
-			// append choice
 			Debugf("    mc ->")
-			if pat != nil {
-				choices = append(choices, pat)
-				pat = nil
-			}
 			if pat == nil {
 				pat = NewPattern()
 			}

@@ -87,6 +87,31 @@ var _ = Describe("the configured system", func() {
 		Expect(hit).To(BeTrue())
 	})
 
+	It("can make a word with normal before nested choices", func() {
+		input := []string{
+			"A:a",
+			"N:n",
+			"T:t",
+			"Q:q",
+			"r:A(N(A/T)/Q)T",
+		}
+		cfg, err := Parse("test", input, 1)
+		hit := false
+		Expect(err).To(BeNil())
+		Debugf("%q", cfg.patterns[0])
+		for i := 0; i < 20; i++ {
+			word, err := cfg.Word()
+			Debugf("%v ", word)
+			Expect(err).To(BeNil())
+			Expect(word).To(MatchRegexp("^a((n[at])|q)t$"))
+			match, err := regexp.MatchString("^an[at]t$", word)
+			if match {
+				hit = true
+			}
+		}
+		Expect(hit).To(BeTrue())
+	})
+
 	It("can make a word from patterns with choices and literals", func() {
 		input := []string{
 			"A:a/e/u",
